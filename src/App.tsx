@@ -9,10 +9,17 @@ function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
   const { user, signOut } = useAuthenticator();
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
+    if (!user) return;
+
+    const sub = client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
+      error: (err) => {
+        console.error("Subscription error:", err);
+      }
     });
-  }, []);
+
+    return () => sub.unsubscribe();
+  }, [user]);
 
   function createTodo() {
     client.models.Todo.create({ content: window.prompt("Todo content") });
